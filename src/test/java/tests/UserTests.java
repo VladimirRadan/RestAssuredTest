@@ -1,15 +1,30 @@
 package tests;
 
+import com.github.javafaker.Faker;
 import config.Config;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
+import user.UserCreate;
+import user.UserLocation;
+import user.UserResponse;
 import utils.Constants;
+
+import java.util.Locale;
 
 import static io.restassured.RestAssured.given;
 
-public class UserTests extends Config {
+public class UserTests extends Config{
+
+    SoftAssert softAssert;
+
+    @BeforeMethod(alwaysRun = true)
+    public void setUp(){
+        softAssert = new SoftAssert();
+    }
 
 
     @Test()
@@ -21,13 +36,13 @@ public class UserTests extends Config {
                 .when().get(Constants.GET_ALL_USERS);
 
         int actualStatusCode = response.statusCode();
-        Assert.assertEquals(actualStatusCode, 200, "Expected status code is 200 but got: " + actualStatusCode);
+        softAssert.assertEquals(actualStatusCode, 200, "Expected status code is 200 but got: " + actualStatusCode);
 
         String actualLastName = response.jsonPath().get("data[0].lastName");
         System.out.println("Actual last name:" + actualLastName);
 
-        Assert.assertEquals(actualLastName, "Robert", "Expected last name is Robert but found: " + actualLastName);
-
+        softAssert.assertEquals(actualLastName, "Calvo", "Expected last name is Robert but found: " + actualLastName);
+        softAssert.assertAll();
     }
 
     @Test
@@ -63,7 +78,14 @@ public class UserTests extends Config {
     @Test
     public void deleteUserTest(){
 
-        String userId = "60d0fe4f5311236168a109fe";
+        UserCreate user = UserCreate.createUser();
+
+        UserResponse userResponse = given()
+                .body(user)
+                .when().post(Constants.CREATE_USER).getBody().as(UserResponse.class);
+
+        String userId = userResponse.getId();
+
         Response response = given()
                 .pathParam("id", userId)
                 .when().delete(Constants.DELETE_USER);
@@ -73,6 +95,65 @@ public class UserTests extends Config {
 
         String actualUserId = response.jsonPath().get("id");
         Assert.assertEquals(actualUserId, userId, "Expected userId is " + userId + "but found: " + actualUserId);
+    }
+
+    @Test
+    public void createUserTest(){
+        String body = "{\n" +
+                "    \"firstName\": \"Test\",\n" +
+                "    \"lastName\": \"User\",\n" +
+                "    \"email\": \"test343@user.com\",\n" +
+                "    \"gender\": \"female\",\n" +
+                "    \"phone\": \"1-770-736-8031\",\n" +
+                "    \"location\": {\n" +
+                "        \"street\": \"test\",\n" +
+                "        \"city\": \"city\",\n" +
+                "        \"state\": \"test\",\n" +
+                "        \"country\": \"test\"\n" +
+                "    }\n" +
+                "}";
+
+        given()
+                .body(body)
+                .log().all()
+                .when().post(Constants.CREATE_USER)
+                .then().log().all();
+
+    }
+
+    @Test
+    public void createUserTestUsingJavaObject(){
+        Faker faker = new Faker(new Locale("en-US"));
+
+        UserLocation location = UserLocation.builder()
+                .city(faker.address().city())
+                .state(faker.address().state())
+                .street(faker.address().streetAddress())
+                .country(faker.address().country())
+                .build();
+
+        UserCreate user = UserCreate.builder()
+                .email(faker.internet().emailAddress())
+                .phone(faker.phoneNumber().phoneNumber())
+                .first_name(faker.name().firstName())
+                .lastName(faker.name().lastName())
+                .userLocation(location)
+                .build();
+
+        //UserCreate user = UserCreate.createUser();
+
+        UserResponse userResponse = given()
+                .body(user)
+                .when().post(Constants.CREATE_USER).getBody().as(UserResponse.class);
+
+
+
+        softAssert.assertEquals(userResponse.getEmail(), user.getEmail() + "fail");
+        softAssert.assertEquals(userResponse.getFirstName(), user.getFirst_name());
+        softAssert.assertEquals(userResponse.getLastName(), user.getLastName() + "fail");
+        softAssert.assertEquals(userResponse.getLocation().getStreet(), user.getUserLocation().getStreet());
+        softAssert.assertAll();
+
     }
 
 
