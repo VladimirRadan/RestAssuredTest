@@ -4,8 +4,13 @@ import com.github.javafaker.Faker;
 import config.Config;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import listeners.RetryAnalyzer;
+import listeners.TestListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 import user.UserCreate;
@@ -16,9 +21,10 @@ import utils.Constants;
 import java.util.Locale;
 
 import static io.restassured.RestAssured.given;
-
+@Listeners(TestListener.class)
 public class UserTests extends Config{
 
+    private static final Logger logger = LogManager.getLogger(UserTests.class);
     SoftAssert softAssert;
 
     @BeforeMethod(alwaysRun = true)
@@ -27,7 +33,7 @@ public class UserTests extends Config{
     }
 
 
-    @Test()
+    @Test(groups = "smoke", description = "Get all users, expected: List of users is returned")
     public void getAllUsersTest(){
 
         Response response = given()
@@ -39,13 +45,13 @@ public class UserTests extends Config{
         softAssert.assertEquals(actualStatusCode, 200, "Expected status code is 200 but got: " + actualStatusCode);
 
         String actualLastName = response.jsonPath().get("data[0].lastName");
-        System.out.println("Actual last name:" + actualLastName);
+        logger.info("Actual last name:" + actualLastName);
 
         softAssert.assertEquals(actualLastName, "Calvo", "Expected last name is Robert but found: " + actualLastName);
         softAssert.assertAll();
     }
 
-    @Test
+    @Test(retryAnalyzer = RetryAnalyzer.class)
     public void getAllUsersUsingJsonPathObjectTest(){
         JsonPath jsonPath = given()
                 .queryParam("page", "1")
@@ -53,7 +59,7 @@ public class UserTests extends Config{
                 .when().get(Constants.GET_ALL_USERS).jsonPath();
 
         String actualLastName = jsonPath.get("data[0].lastName");
-        System.out.println("Actual last name:" + actualLastName);
+        logger.info("Actual last name:" + actualLastName);
 
         Assert.assertEquals(actualLastName, "Robert", "Expected last name is Robert but found: " + actualLastName);
 
@@ -122,7 +128,7 @@ public class UserTests extends Config{
     }
 
     @Test
-    public void createUserTestUsingJavaObject(){
+    public void createUserUsingJavaObjectTest(){
         Faker faker = new Faker(new Locale("en-US"));
 
         UserLocation location = UserLocation.builder()
@@ -146,12 +152,49 @@ public class UserTests extends Config{
                 .body(user)
                 .when().post(Constants.CREATE_USER).getBody().as(UserResponse.class);
 
-
-
-        softAssert.assertEquals(userResponse.getEmail(), user.getEmail() + "fail");
+        softAssert.assertEquals(userResponse.getEmail(), user.getEmail());
         softAssert.assertEquals(userResponse.getFirstName(), user.getFirst_name());
-        softAssert.assertEquals(userResponse.getLastName(), user.getLastName() + "fail");
+        softAssert.assertEquals(userResponse.getLastName(), user.getLastName());
         softAssert.assertEquals(userResponse.getLocation().getStreet(), user.getUserLocation().getStreet());
+        softAssert.assertAll();
+
+    }
+
+    @Test
+    public void updateUserTest(){
+        UserCreate user = UserCreate.createUser();
+
+        UserResponse userResponse = given()
+                .body(user)
+                .when().post(Constants.CREATE_USER).getBody().as(UserResponse.class);
+
+        String updatedFirstName = "updatedFirstName";
+        String updatedEmail = "updatedEmail";
+        String updatedCity = "updatedCity";
+
+        //Prvi nacin za update podataka za slanje u body-ju
+//        user.setEmail(updatedEmail);
+//        user.setFirst_name(updatedFirstName);
+//        user.getUserLocation().setCity(updatedCity);
+
+        //Drugi nacin za update podataka za slanje u body-ju
+        UserCreate updatedUser = user
+                .withEmail(updatedEmail)
+                .withFirst_name(updatedFirstName)
+                .withUserLocation(user.getUserLocation().withCity(updatedCity));
+
+        String userId = userResponse.getId();
+
+        UserResponse updatedUserResponse = given()
+                .body(updatedUser)
+                .pathParam("id", userId)
+                .when().put(Constants.UPDATE_USER).getBody().as(UserResponse.class);
+
+        boolean isUserNameUpdated = updatedUserResponse.getFirstName().equals(updatedFirstName);
+
+        softAssert.assertTrue(isUserNameUpdated, "");
+        //softAssert.assertEquals(updatedUserResponse.getEmail(), updatedEmail);//ne moze da se update-uje
+        softAssert.assertEquals(updatedUserResponse.getLocation().getCity(), updatedCity);
         softAssert.assertAll();
 
     }

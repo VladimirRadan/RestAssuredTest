@@ -1,13 +1,11 @@
 package user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
+@With
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor()

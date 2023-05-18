@@ -9,6 +9,7 @@ import java.util.Locale;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
+@With
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor()

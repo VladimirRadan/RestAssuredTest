@@ -26,8 +26,8 @@ public class Config {
                 .setBasePath("/v1/")
                 .addHeaders(headers)
                 .setContentType(ContentType.JSON)
-                .addFilter(new RequestLoggingFilter())
-                .addFilter(new ResponseLoggingFilter())
+//                .addFilter(new RequestLoggingFilter())
+//                .addFilter(new ResponseLoggingFilter())
                 .build();
 
         ResponseSpecification responseSpecification = new ResponseSpecBuilder()
