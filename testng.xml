@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Rest Asssured project">
+
+    <test name="Rest Assured Tests">
+        <groups>
+            <run>
+                <include name="smoke"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="tests.UserTests"></class>
+            <class name="tests.UserPostsTests"></class>
+        </classes>
+    </test>
+</suite>
