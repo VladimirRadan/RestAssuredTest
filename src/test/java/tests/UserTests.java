@@ -17,6 +17,7 @@ import user.UserCreate;
 import user.UserLocation;
 import user.UserResponse;
 import utils.Constants;
+import utils.Utils;
 
 import java.util.Locale;
 
@@ -119,12 +120,12 @@ public class UserTests extends Config{
                 "    }\n" +
                 "}";
 
+        Utils.createJsonFile("user", body);
         given()
                 .body(body)
                 .log().all()
                 .when().post(Constants.CREATE_USER)
                 .then().log().all();
-
     }
 
     @Test
@@ -147,6 +148,8 @@ public class UserTests extends Config{
                 .build();
 
         //UserCreate user = UserCreate.createUser();
+
+        Utils.createJsonFile("userObject", user);
 
         UserResponse userResponse = given()
                 .body(user)
@@ -197,6 +200,13 @@ public class UserTests extends Config{
         softAssert.assertEquals(updatedUserResponse.getLocation().getCity(), updatedCity);
         softAssert.assertAll();
 
+    }
+
+
+    @Test
+    public void readFromJson(){
+        UserResponse user = Utils.getUserFromJson("userObject");
+        System.out.println(user);
     }
 
 

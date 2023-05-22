@@ -2,9 +2,13 @@ package user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import lombok.*;
+import utils.Constants;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -43,5 +47,6 @@ public class UserCreate {
                 .build();
         return user;
     }
+
 
 }

@@ -8,6 +8,8 @@ public class Constants {
     public static final String CREATE_USER = "/user/create";
     public static final String UPDATE_USER = "user/{id}";
 
+    public static final String PROJECT_ROOT = System.getProperty("user.dir");
+
 
 
 }
